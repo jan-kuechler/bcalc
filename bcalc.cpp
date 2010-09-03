@@ -4,8 +4,14 @@
 #include "stdafx.h"
 
 
-int _tmain(int argc, _TCHAR* argv[])
+int main(int argc, char* argv[])
 {
+	std::wstring buffer;
+
+	while (std::getline(std::wcin, buffer)) {
+
+	}
+
 	return 0;
 }
 
