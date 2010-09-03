@@ -44,7 +44,7 @@ public:
   DynamicFunction(const std::list<std::wstring>& a, std::shared_ptr<Node> b)
     : args(a), body(b)
   { 
-    argValues.reserve(args.size());
+    argValues.resize(args.size());
   }
 
   size_t GetNumArgs() const

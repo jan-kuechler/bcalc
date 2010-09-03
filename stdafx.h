@@ -11,3 +11,15 @@
 #include <fstream>
 
 #include <string>
+
+#include <deque>
+#include <map>
+#include <tuple>
+
+#include <functional>
+#include <memory>
+
+#include <boost/algorithm/string.hpp>
+#include <boost/format.hpp>
+#include <boost/tokenizer.hpp>
+#include <boost/variant.hpp>
