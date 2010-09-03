@@ -76,7 +76,7 @@ Token Lexer::ReadIdent()
   do {
     buf += cur;
     NextChar();
-  } while (std::iswalpha(cur) || cur == L'_');
+  } while (std::iswalpha(cur) || std::iswdigit(cur)|| cur == L'_');
   return Token(buf, pos);
 }
 
