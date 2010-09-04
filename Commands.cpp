@@ -3,7 +3,7 @@
 #include "Env.h"
 #include "Commands.h"
 
-namespace 
+namespace
 {
 	bool readline(std::wistream& in, std::wstring& line, size_t& ln)
 	{
@@ -117,7 +117,8 @@ Result Cmd::Run::operator()(const std::wstring& args)
 
 	resultSets.clear();
 	for (auto it = varSets.begin(); it != varSets.end(); ++it) {
-		CallFor(*it);
+		if (!CallFor(*it))
+			return ERROR_MSG(result);
 	}
 
 #if USE_FIXED_FORMAT
@@ -152,7 +153,6 @@ bool Cmd::Run::CallFor(const VarSet& set)
 			res.push_back(env.Eval(*fn));
 		}
 		catch (tr::Diagnostics& dg) {
-			result.clear();
 			result = dg.Describe();
 			return false;
 		}
@@ -164,15 +164,14 @@ bool Cmd::Run::CallFor(const VarSet& set)
 	}
 #if USE_FIXED_FORMAT
 	resultSets.push_back(res);
-	return true;
 #else
 	resFmt.clear_binds();
 	for (size_t i=0; i < res.size(); ++i) {
 		resFmt.bind_arg(i+1, res[i]);
 	}
 	result += resFmt.str();
-	return true;
 #endif
+	return true;
 }
 
 #if USE_FIXED_FORMAT
@@ -220,7 +219,7 @@ void Cmd::Run::BuildFormat()
 		auto w = boost::lexical_cast<std::wstring>(l);
 		auto prec = boost::lexical_cast<std::wstring>(l - 2);
 		fmt += L" %|" + w + L"." + prec + L"|";
-		if (i != funcNames.size() - 1) 
+		if (i != funcNames.size() - 1)
 			fmt += L" |";
 	}
 	fmt += L'\n';

@@ -10,12 +10,113 @@
 
 #include "Commands.h"
 
+#include <boost/logic/tribool.hpp>
+
+#define OUT(x) do {std::wcout << x; log << x; } while (0)
+
+typedef std::map<std::wstring, Command> CommandMap;
+
+using namespace boost::logic;
+
+tribool Execute(std::wstring& line, CommandMap& commands, std::wostream& log)
+{
+	boost::trim(line);
+	if (line.empty())
+		return true; // nothing to do
+	auto split = line.find(L' ');
+	std::wstring cmd = line.substr(0, split);
+
+	bool hasArgs = split != line.npos;
+	std::wstring args = hasArgs ? line.substr(split+1) : L"";
+
+	bool exit = false;
+	if (commands.find(cmd) != commands.end()) {
+		auto res = commands[cmd](args);
+		switch (std::get<0>(res)) {
+		case OK:
+			// Silent ok
+			break;
+		case ERROR:
+			{
+				std::wstring msg = boost::get<std::wstring>(std::get<1>(res));
+				OUT(L"Error: " << msg << std::endl);
+				return indeterminate;
+				break;
+			}
+		case RESULT:
+			{
+				auto data = std::get<1>(res);
+				auto res = boost::get<double>(data);
+				OUT(res << std::endl);
+				break;
+			}
+		case MESSAGE:
+			{
+				auto data = std::get<1>(res);
+				auto res = boost::get<std::wstring>(data);
+				OUT(res << std::endl);
+				break;
+			}
+		case QUIT:
+			return false;
+			break;
+		default:
+			assert(false);
+		}
+	}
+	else {
+		OUT(L"Error: Unknown command '" << cmd << L"'" << std::endl);
+		return indeterminate;
+	}
+	return true;
+}
+
+bool readline(std::wistream& in, std::wstring& line, size_t& ln)
+{
+	while (std::getline(in, line)) {
+		ln++;
+		boost::trim(line);
+		if (boost::starts_with(line, L"#"))
+			continue;
+		return true;
+	}
+	return false;
+}
+
 Result do_quit(const std::wstring&)
 {
 	return std::make_tuple(QUIT, Empty());
 }
 
-#define OUT(x) do {std::wcout << x; log << x; } while (0)
+struct Exec
+{
+	Result operator()(const std::wstring& args)
+	{
+		std::wifstream in(args);
+		if (!in.is_open()) {
+			return ERROR_MSG(L"Could not open '" + args + L"'");
+		}
+
+		std::wstring line;
+		size_t ln = 0;
+		while (readline(in, line, ln)) {
+			tribool res = Execute(line, cmds, log);
+			if (res == false)
+				break;
+			else if (indeterminate(res)) {
+				return ERROR_MSG(L"In line " + boost::lexical_cast<std::wstring>(ln));
+			}
+		}
+		return std::make_tuple(OK, Empty());
+	}
+
+	Exec(CommandMap& c, std::wostream& l)
+		: cmds(c), log(l)
+	{ }
+private:
+	CommandMap& cmds;
+	std::wostream& log;
+};
 
 int main(int argc, char* argv[])
 {
@@ -29,6 +130,7 @@ int main(int argc, char* argv[])
 	commands[L"set"]  = Cmd::Def(env);
 	commands[L"calc"] = Cmd::Calc(env);
 	commands[L"run"]  = Cmd::Run(env);
+	commands[L"exec"] = Exec(commands, log);
 
 	{
 		boost::posix_time::ptime now = boost::posix_time::second_clock::local_time();
@@ -41,51 +143,8 @@ int main(int argc, char* argv[])
 	std::wstring buffer;
 	while (std::getline(std::wcin, buffer)) {
 		log << buffer << std::endl;
-		boost::trim(buffer);
-		auto split = buffer.find(L' ');
-		std::wstring cmd = buffer.substr(0, split);
 
-		bool hasArgs = split != buffer.npos;
-		std::wstring args = hasArgs ? buffer.substr(split+1) : L"";
-
-		bool exit = false;
-		if (commands.find(cmd) != commands.end()) {
-			auto res = commands[cmd](args);
-			switch (std::get<0>(res)) {
-			case OK:
-				// Silent ok
-				break; 
-			case ERROR:
-				{
-					std::wstring msg = boost::get<std::wstring>(std::get<1>(res));
-					OUT(L"Error: " << msg << std::endl);
-					break;
-				}
-			case RESULT:
-				{
-					auto data = std::get<1>(res);
-					auto res = boost::get<double>(data);
-					OUT(res << std::endl);
-					break;
-				}
-			case MESSAGE:
-				{
-					auto data = std::get<1>(res);
-					auto res = boost::get<std::wstring>(data);
-					OUT(res << std::endl);
-					break;
-				}
-			case QUIT:
-				exit = true;
-				break;
-			default:
-				assert(false);
-			}
-		}
-		else {
-			OUT(L"Error: Unknown command '" << cmd << L"'" << std::endl);
-		}
-		if (exit)
+		if (Execute(buffer, commands, log) == false)
 			break;
 		OUT(L"> ");
 	}
