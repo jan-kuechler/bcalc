@@ -118,6 +118,38 @@ private:
 	std::wostream& log;
 };
 
+struct Helper
+{
+	Result operator()(const std::wstring& arg)
+	{
+		if (helpStrings.find(arg) != helpStrings.end()) {
+			OUT(arg << helpStrings[arg] << std::endl);
+		}
+		else {
+			OUT(L"\t\tbcalc - A batch calculator" << std::endl << std::endl);
+			for (auto i=helpStrings.begin(); i!=helpStrings.end(); ++i)
+				OUT(i->first << i->second << std::endl);
+		}
+		return std::make_tuple(OK, Empty());
+	}
+
+	Helper(std::wostream& l)
+	: log(l)
+	{
+		helpStrings[L"quit"] = L"                         - Quit bcalc";
+		helpStrings[L"exit"] = L"                         - Quit bcalc";
+		helpStrings[L"def"]  = L"  <expression>            - Define a function";
+		helpStrings[L"set"]  = L"  <expression>            - Set a variable";
+		helpStrings[L"calc"] = L" <expression>            - Evaluate an expression and show the result";
+		helpStrings[L"run"]  = L"  <file> <expr> [expr...] - Run expressions on the dataset in file";
+		helpStrings[L"exec"] = L" <file>                  - Execute a script file";
+		helpStrings[L"help"] = L" [cmd]                   - Show help for one or all commands";
+	}
+private:
+	std::wostream& log;
+	std::map<std::wstring, std::wstring> helpStrings;
+};
+
 int main(int argc, char* argv[])
 {
 	std::map<std::wstring, Command> commands;	
@@ -131,6 +163,7 @@ int main(int argc, char* argv[])
 	commands[L"calc"] = Cmd::Calc(env);
 	commands[L"run"]  = Cmd::Run(env);
 	commands[L"exec"] = Exec(commands, log);
+	commands[L"help"] = Helper(log);
 
 	{
 		boost::posix_time::ptime now = boost::posix_time::second_clock::local_time();
