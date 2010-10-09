@@ -8,7 +8,7 @@ using namespace tr;
 void Parser::Accept(Token::Type t)
 {
   if (token != t)
-    throw Diag::InvalidToken(t, token);
+    throw Diag::InvalidToken(t, token, origInput);
   NextToken();
 }
 

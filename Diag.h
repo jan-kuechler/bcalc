@@ -10,7 +10,7 @@ namespace tr
 class Diagnostics
 {
 public:
-  virtual std::wstring Describe() const
+	virtual std::wstring Describe() const
 	{
 		return L"<Unkown error>";
 	}
@@ -18,45 +18,46 @@ public:
 
 namespace Diag
 {
-  class InvalidToken : public Diagnostics
-  {
-    Token exp, got;
-  public:
-    InvalidToken(Token e, Token g)
-      : exp(e), got(g)
-    { }
+	class InvalidToken : public Diagnostics
+	{
+		Token exp, got;
+		std::wstring expr;
+	public:
+		InvalidToken(Token e, Token g, const std::wstring& expr = L"")
+		: exp(e), got(g), expr(expr)
+		{ }
 
 		std::wstring Describe() const;
-  };
+	};
 
-  class UnknownVariable : public Diagnostics
-  {
-    std::wstring name;
-  public:
-    UnknownVariable(const std::wstring& n)
-      : name(n)
-    { }
-
-		std::wstring Describe() const;
-  };
-
-  class UnknownFunction : public Diagnostics
-  {
-    std::wstring name;
-  public:
-    UnknownFunction(const std::wstring& n)
-      : name(n)
-    { }
+	class UnknownVariable : public Diagnostics
+	{
+		std::wstring name;
+	public:
+		UnknownVariable(const std::wstring& n)
+		: name(n)
+		{ }
 
 		std::wstring Describe() const;
-  };
+	};
+
+	class UnknownFunction : public Diagnostics
+	{
+		std::wstring name;
+	public:
+		UnknownFunction(const std::wstring& n)
+		: name(n)
+		{ }
+
+		std::wstring Describe() const;
+	};
 };
 
 };
 
 inline std::wostream& operator<<(std::wostream& os, const tr::Diagnostics& di)
 {
-  return os << di.Describe();
+	return os << di.Describe();
 }
 
 #endif //DIAG_H

@@ -5,11 +5,14 @@ using namespace tr::Diag;
 
 std::wstring InvalidToken::Describe() const
 {
-	size_t pos = got.GetPos();
-	std::wstring point(pos, L' ');
-	point += L'^';
+	std::wstring res;
+	if (!expr.empty()) {
+		size_t pos = got.GetPos() + 7; // 7 == "Error: ".length()
+		std::wstring point(pos, L' ');
+		point += L'^';
 	
-	std::wstring res = point + L'\n';
+		res = expr + L'\n' + point + L'\n';
+	}
 	res += L"Epxected " + exp.GetDesc() + L" instead of " + got.GetDesc();
 	return res;
 }   

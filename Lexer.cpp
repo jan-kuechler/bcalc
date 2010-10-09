@@ -22,7 +22,7 @@ Token Lexer::NextToken(bool peek)
 Token Lexer::ReadNextToken()
 {
   SkipSpaces();
-  size_t pos = inPos;
+  size_t pos = inPos - 1;
   switch (cur) {
   case L'+': NextChar(); return Token(Token::ADD, pos);
   case L'-': NextChar(); return Token(Token::SUB, pos);
@@ -60,6 +60,13 @@ Token Lexer::ReadNumber()
       buf += cur;
       NextChar();
     }
+  }
+  if (cur == L'e' || cur == L'E') {
+	buf += cur;
+	while (std::iswdigit(cur)) {
+		buf += cur;
+		NextChar();
+	}
   }
 
   std::wstringstream s;

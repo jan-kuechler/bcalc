@@ -12,11 +12,12 @@ namespace tr
 
 class Parser
 {
-  Lexer lexer;
-  Token token;
+	Lexer lexer;
+	Token token;
+	std::wstring origInput;
 public:
   Parser(const std::wstring& input)
-    : lexer(input)
+    : origInput(input), lexer(input)
   {
     NextToken();
   }
