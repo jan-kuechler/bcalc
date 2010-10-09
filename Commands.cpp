@@ -32,14 +32,14 @@ bool Cmd::Run::LoadData(std::wistream& in)
 	varNames.clear();
 	varSets.clear();
 
-	boost::split(varNames, line, boost::is_space());
+	boost::split(varNames, line, boost::is_space(), boost::token_compress_on);
 	auto n = varNames.size();
 
 	while (readline(in, line, lineNumber)) {
 		if (line.empty())
 			continue;
 		std::deque<std::wstring> numbers;
-		boost::split(numbers, line, boost::is_space());
+		boost::split(numbers, line, boost::is_space(), boost::token_compress_on);
 		if (numbers.size() != n) {
 			result = L"Incorrect number of values in line " + boost::lexical_cast<std::wstring>(lineNumber);
 			return false;
@@ -63,12 +63,30 @@ bool Cmd::Run::LoadData(std::wistream& in)
 
 Result Cmd::Run::operator()(const std::wstring& args)
 {
+#if 1
 	boost::tokenizer<
 		boost::escaped_list_separator<wchar_t>,
 		std::wstring::const_iterator,
 		std::wstring
 	> tok(args.begin(), args.end(), boost::escaped_list_separator<wchar_t>(L'\\', L' ', L'"'));
 	std::deque<std::wstring> parts(tok.begin(), tok.end());
+#else
+	std::deque<std::wstring> parts;
+	bool quot = false;
+	boost::split(parts, args, [&quot](wchar_t c) -> bool {
+		if (c == L'\"')
+			quot = !quot;
+		else if (std::isspace(c) && !quot)
+			return true;
+		return false;
+	}, boost::token_compress_on);
+
+	std::for_each(parts.begin(), parts.end(), [](std::wstring& str) {
+		boost::trim_if(str, [](wchar_t c){
+			return c == L'\"';
+		});
+	});
+#endif
 
 	if (parts.size() < 2)
 		return ERROR_MSG(L"Usage: run <file> <func> [func...]");

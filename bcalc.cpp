@@ -41,25 +41,24 @@ tribool Execute(std::wstring& line, CommandMap& commands, std::wostream& log)
 				std::wstring msg = boost::get<std::wstring>(std::get<1>(res));
 				OUT(L"Error: " << msg << std::endl);
 				return indeterminate;
-				break;
 			}
+			break;
 		case RESULT:
 			{
 				auto data = std::get<1>(res);
 				auto res = boost::get<double>(data);
-				OUT(res << std::endl);
-				break;
+				OUT(res << std::endl);	
 			}
+			break;
 		case MESSAGE:
 			{
 				auto data = std::get<1>(res);
 				auto res = boost::get<std::wstring>(data);
 				OUT(res << std::endl);
-				break;
 			}
+			break;
 		case QUIT:
 			return false;
-			break;
 		default:
 			assert(false);
 		}
